@@ -1,17 +1,55 @@
 /* ==========================================================================
-   CYBER CHAT - ADVANCED LIVE CHAT ENGINE
-   Features: Multi-tab sync (BroadcastChannel/LocalStorage), Interactive AI Bots,
-             Web Audio API sound effects, Canvas Particle Engine, & WebRTC P2P.
+   CYBER CHAT - ADVANCED LIVE CHAT ENGINE (SANDBOX & GITHUB COMPATIBLE)
    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Safe Storage & Sandbox Helpers ---
+    function safeSetStorage(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            if (!window._memoryStorage) window._memoryStorage = {};
+            window._memoryStorage[key] = value;
+        }
+    }
+
+    function safeGetStorage(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            if (!window._memoryStorage) window._memoryStorage = {};
+            return window._memoryStorage[key] || null;
+        }
+    }
+
+    function safeRemoveStorage(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            if (window._memoryStorage && window._memoryStorage[key]) {
+                delete window._memoryStorage[key];
+            }
+        }
+    }
+
+    function getSafeBroadcastChannel(channelName) {
+        try {
+            if ('BroadcastChannel' in window) {
+                return new BroadcastChannel(channelName);
+            }
+        } catch (e) {
+            console.log('BroadcastChannel restricted in sandbox mode, using memory fallback');
+        }
+        return null;
+    }
+
     // --- Global Application State ---
     const appState = {
-        currentUser: null,           // { id, name, avatar, status, isBot: false }
-        activeTargetUser: null,      // User currently selected in right sidebar
-        users: new Map(),            // Map of userId -> user object
-        messages: new Map(),         // Map of targetUserId -> Array of message objects
-        unreadCounts: new Map(),     // Map of userId -> count
+        currentUser: null,
+        activeTargetUser: null,
+        users: new Map(),
+        messages: new Map(),
+        unreadCounts: new Map(),
         soundEnabled: true,
         themes: ['theme-cyberpunk', 'theme-matrix', 'theme-sunset', 'theme-gold'],
         currentThemeIdx: 0,
@@ -67,19 +105,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTabContents = document.querySelectorAll('.modal-tab-content');
 
     // =========================================================================
-    // 1. WEB AUDIO API SYNTHESIZED SOUND EFFECTS (Zero External Files Needed)
+    // 1. WEB AUDIO API SYNTHESIZED SOUND EFFECTS
     // =========================================================================
     let audioCtx = null;
     function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
+        try {
+            if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        } catch (e) {}
     }
 
     function playSound(type) {
         if (!appState.soundEnabled) return;
         try {
             initAudio();
+            if (!audioCtx) return;
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
@@ -125,7 +166,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 osc.stop(now + 0.12);
             }
             else if (type === 'receive') {
-                // Melodic double beep
                 const osc1 = audioCtx.createOscillator();
                 const gain1 = audioCtx.createGain();
                 osc1.type = 'sine';
@@ -149,7 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 osc2.stop(now + 0.28);
             }
             else if (type === 'fx') {
-                // Magic chord
                 [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
@@ -163,13 +202,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     osc.stop(now + idx * 0.06 + 0.3);
                 });
             }
-        } catch (e) {
-            console.log('Audio error:', e);
-        }
+        } catch (e) {}
     }
 
     // =========================================================================
-    // 2. CANVAS PARTICLE ENGINE (Futuristic Background Animation)
+    // 2. CANVAS PARTICLE ENGINE
     // =========================================================================
     const canvas = document.getElementById('particle-canvas');
     const ctx = canvas.getContext('2d');
@@ -177,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let mouse = { x: null, y: null };
 
     function resizeCanvas() {
+        if (!canvas) return;
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     }
@@ -184,8 +222,8 @@ document.addEventListener('DOMContentLoaded', () => {
     resizeCanvas();
 
     window.addEventListener('mousemove', (e) => {
-        mouse.x = e.x;
-        mouse.y = e.y;
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
     });
     window.addEventListener('mouseout', () => {
         mouse.x = null;
@@ -208,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (this.x < 0 || this.x > canvas.width) this.speedX = -this.speedX;
             if (this.y < 0 || this.y > canvas.height) this.speedY = -this.speedY;
 
-            // Mouse interaction
             if (mouse.x && mouse.y) {
                 const dx = mouse.x - this.x;
                 const dy = mouse.y - this.y;
@@ -237,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initParticles();
 
     function animateParticles() {
+        if (!ctx || !canvas) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (let i = 0; i < particles.length; i++) {
             particles[i].update();
@@ -262,12 +300,13 @@ document.addEventListener('DOMContentLoaded', () => {
     animateParticles();
 
     // =========================================================================
-    // 3. SPECIAL VISUAL EFFECTS (Particle & Confetti Bursts)
+    // 3. SPECIAL VISUAL EFFECTS
     // =========================================================================
     const fxContainer = document.getElementById('fx-container');
 
     function triggerConfettiBurst(x = window.innerWidth / 2, y = window.innerHeight / 2, emojis = ['🎉', '✨', '⚡', '🔥', '❤️', '💎', '🚀']) {
         playSound('fx');
+        if (!fxContainer) return;
         for (let i = 0; i < 30; i++) {
             const particle = document.createElement('span');
             particle.className = 'fx-particle';
@@ -292,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 4. PRELOAD INTERACTIVE SIMULATED BOTS
+    // 4. PRELOAD INTERACTIVE BOTS
     // =========================================================================
     const PRELOADED_BOTS = [
         {
@@ -303,9 +342,9 @@ document.addEventListener('DOMContentLoaded', () => {
             isBot: true,
             responses: [
                 "سلام دوست من! خیلی خوش اومدی به سایبر چت ✨ من آریا هستم، دستیار هوشمند سایت.",
-                "این سایت با معماری کاملاً کلاینت-ساید و قابلیت همگام‌سازی بین تب‌ها (BroadcastChannel) ساخته شده!",
-                "افکت‌های نئونی و گلس‌مورفیسم رو چطور می‌بینی؟ اگه روی دکمه چوب جادویی بالای چت بزنی، افکت ویژه می‌بینی 🎉",
-                "برای اینکه این سایت رو روی گیت‌هاب ران کنی، فقط کافیه فایل‌های همین پوشه رو آپلود کنی و از بخش Settings > Pages فعالش کنی! راهنمای کامل رو هم از آیکون گیت‌هاب بالای صفحه بخون.",
+                "این سایت با معماری کاملاً کلاینت-ساید و قابلیت همگام‌سازی بین تب‌ها ساخته شده و بدون نیاز به سرور مرکزی کار می‌کنه!",
+                "افکت‌های نئونی و گلس‌مورفیسم رو چطور می‌بینی؟ اگه روی دکمه انفجار شادی بالای چت بزنی، افکت ویژه می‌بینی 🎉",
+                "برای اینکه این سایت رو روی گیت‌هاب ران کنی، فقط کافیه فایل‌های همین پوشه رو آپلود کنی و از بخش Settings > Pages فعالش کنی! راهنمای کامل رو هم از دکمه راهنما بالای صفحه بخون.",
                 "هر سوالی یا پیامی داری بهم بگو، من آنلاینم! 🔥⚡"
             ]
         },
@@ -317,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isBot: true,
             responses: [
                 "سلام! دیزاین سایبرپانک سایت فوق‌العاده‌ست، مگه نه؟ 😍",
-                "رنگ‌های فیروزه‌ای (#00f3ff) و بنفش نئونی ترکیب شگفت‌انگیزی می‌سازن! اگه دوست داری می‌تونی با آیکون جادو بالای صفحه تم رنگی رو هم عوض کنی ✨",
+                "رنگ‌های فیروزه‌ای (#00f3ff) و بنفش نئونی ترکیب شگفت‌انگیزی می‌سازن! اگه دوست داری می‌تونی با دکمه جرقه ✨ بالای صفحه تم رنگی رو هم عوض کنی!",
                 "اموجی‌ها رو هم تست کن! روی دکمه خندان کنار کادر متن کلیک کن یا دکمه آتش 🔥 رو بزن!",
                 "مرسی که این پلتفرم رو تست می‌کنی ❤️"
             ]
@@ -338,18 +377,16 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     // =========================================================================
-    // 5. MULTI-TAB & REAL-TIME COMMUNICATION ENGINE
+    // 5. NETWORK ENGINE
     // =========================================================================
     function initNetworkEngine() {
-        // Initialize BroadcastChannel for modern multi-tab sync
-        if ('BroadcastChannel' in window) {
-            appState.broadcastChannel = new BroadcastChannel('cyberchat_network_v1');
+        appState.broadcastChannel = getSafeBroadcastChannel('cyberchat_network_v1');
+        if (appState.broadcastChannel) {
             appState.broadcastChannel.onmessage = (event) => {
                 handleNetworkMessage(event.data);
             };
         }
 
-        // Also listen to localStorage events (reliable fallback)
         window.addEventListener('storage', (e) => {
             if (e.key === 'cyberchat_broadcast_event' && e.newValue) {
                 try {
@@ -359,11 +396,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Start heartbeat to keep self "online" every 2.5 seconds
         setInterval(sendHeartbeat, 2500);
         sendHeartbeat();
-
-        // Clean up offline users every 5 seconds
         setInterval(checkOfflineUsers, 5000);
     }
 
@@ -376,36 +410,34 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (appState.broadcastChannel) {
-            appState.broadcastChannel.postMessage(messagePacket);
+            try {
+                appState.broadcastChannel.postMessage(messagePacket);
+            } catch (e) {}
         }
-
-        // Trigger storage event for tabs where BroadcastChannel isn't active
-        localStorage.setItem('cyberchat_broadcast_event', JSON.stringify(messagePacket));
+        safeSetStorage('cyberchat_broadcast_event', JSON.stringify(messagePacket));
     }
 
     function sendHeartbeat() {
         if (!appState.currentUser) return;
-        broadcast('HEARTBEAT', {
-            user: appState.currentUser
-        });
-        // Also write self to active heartbeats dictionary in localStorage
+        broadcast('HEARTBEAT', { user: appState.currentUser });
         try {
-            const registry = JSON.parse(localStorage.getItem('cyberchat_users_registry') || '{}');
+            const raw = safeGetStorage('cyberchat_users_registry') || '{}';
+            const registry = JSON.parse(raw);
             registry[appState.currentUser.id] = {
                 user: appState.currentUser,
                 lastSeen: Date.now()
             };
-            localStorage.setItem('cyberchat_users_registry', JSON.stringify(registry));
+            safeSetStorage('cyberchat_users_registry', JSON.stringify(registry));
         } catch (e) {}
     }
 
     function checkOfflineUsers() {
         try {
-            const registry = JSON.parse(localStorage.getItem('cyberchat_users_registry') || '{}');
+            const raw = safeGetStorage('cyberchat_users_registry') || '{}';
+            const registry = JSON.parse(raw);
             const now = Date.now();
             let changed = false;
 
-            // Load active registry users into local users map
             Object.keys(registry).forEach(uid => {
                 if (uid === (appState.currentUser ? appState.currentUser.id : '')) return;
                 const record = registry[uid];
@@ -415,7 +447,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         changed = true;
                     }
                 } else {
-                    // User offline/closed tab
                     if (appState.users.has(uid) && !record.user.isBot) {
                         appState.users.delete(uid);
                         changed = true;
@@ -431,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleNetworkMessage(packet) {
         if (!packet || !appState.currentUser) return;
-        if (packet.senderId === appState.currentUser.id) return; // Ignore self
+        if (packet.senderId === appState.currentUser.id) return;
 
         const { action, payload } = packet;
 
@@ -442,7 +473,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderUsersSidebar();
                 playSound('login');
             } else {
-                // Update user details if changed
                 const existing = appState.users.get(u.id);
                 if (existing.name !== u.name || existing.status !== u.status) {
                     appState.users.set(u.id, u);
@@ -460,39 +490,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         else if (action === 'DIRECT_MESSAGE' && payload.targetUserId === appState.currentUser.id) {
-            const { senderId, message } = payload;
-            receiveMessage(senderId, message);
-        }
-        else if (action === 'TYPING' && payload.targetUserId === appState.currentUser.id) {
-            const { senderId, isTyping } = payload;
-            if (appState.activeTargetUser && appState.activeTargetUser.id === senderId) {
-                if (isTyping) {
-                    typingUsernameEl.textContent = appState.users.get(senderId)?.name || 'کاربر';
-                    typingIndicatorEl.classList.remove('hidden');
-                } else {
-                    typingIndicatorEl.classList.add('hidden');
-                }
-            }
+            receiveMessage(payload.senderId, payload.message);
         }
     }
 
     // =========================================================================
-    // 6. CHAT AND MESSAGING LOGIC
+    // 6. MESSAGING & BOTS LOGIC
     // =========================================================================
     function receiveMessage(senderId, messageObj) {
         if (!appState.messages.has(senderId)) {
             appState.messages.set(senderId, []);
         }
         appState.messages.get(senderId).push(messageObj);
-
         playSound('receive');
 
-        // Check if currently chatting with this person
         if (appState.activeTargetUser && appState.activeTargetUser.id === senderId) {
             appendMessageToDOM(messageObj);
             scrollToBottom();
         } else {
-            // Increment unread badge
             const currentUnread = appState.unreadCounts.get(senderId) || 0;
             appState.unreadCounts.set(senderId, currentUnread + 1);
             renderUsersSidebar();
@@ -520,12 +535,10 @@ document.addEventListener('DOMContentLoaded', () => {
         playSound('send');
         messageInput.value = '';
 
-        // Check for special emojis to trigger fireworks
         if (text.includes('🎉') || text.includes('❤️') || text.includes('🔥') || text.includes('✨') || text.includes('⚡')) {
             triggerConfettiBurst();
         }
 
-        // Send via Network (Multi-Tab / P2P)
         if (!appState.activeTargetUser.isBot) {
             broadcast('DIRECT_MESSAGE', {
                 targetUserId: targetId,
@@ -533,7 +546,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 message: msgObj
             });
 
-            // Also send via P2P WebRTC if connected
             if (appState.peerConnection && appState.peerConnection.open) {
                 appState.peerConnection.send({
                     type: 'P2P_MESSAGE',
@@ -542,13 +554,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         } else {
-            // Trigger Smart Bot Response!
             triggerBotAIResponse(appState.activeTargetUser, text.trim());
         }
     }
 
     function triggerBotAIResponse(botUser, userText) {
-        // Show typing indicator after a short delay
         setTimeout(() => {
             if (appState.activeTargetUser && appState.activeTargetUser.id === botUser.id) {
                 typingUsernameEl.textContent = botUser.name;
@@ -556,25 +566,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }, 600);
 
-        // Send reply after realistic delay (1.8s to 3s)
         const delay = Math.random() * 1200 + 1800;
         setTimeout(() => {
             if (appState.activeTargetUser && appState.activeTargetUser.id === botUser.id) {
                 typingIndicatorEl.classList.add('hidden');
             }
 
-            // Pick response based on keywords or random
             let replyText = "";
             if (userText.includes('سلام') || userText.includes('درود') || userText.includes('خوبی')) {
                 replyText = `سلام عزیز دل! 🌹 خیلی خوشحالم که در سایبر چت باهات صحبت می‌کنم. چه کمکی از دستم برمیاد؟`;
             } else if (userText.includes('گیت') || userText.includes('github') || userText.includes('ران') || userText.includes('آپلود')) {
                 replyText = `برای آپلود روی گیت‌هاب: ۱) یه مخزن جدید بساز ۲) هر ۳ فایل (index.html, style.css, script.js) رو آپلود کن ۳) از Settings > Pages گزینه branch main رو انتخاب کن و Save رو بزن! 🚀`;
             } else if (userText.includes('افکت') || userText.includes('خفن') || userText.includes('تم')) {
-                replyText = `افکت‌های سایت شامل ذرات معلق پس‌زمینه، گلس‌مورفیسم، ۴ تم رنگی متنوع و اصوات سینت‌سایزر Web Audio هست! دکمه چوب جادویی رو کلیک کن تا انفجار شادی رو ببینی ✨🎉`;
+                replyText = `افکت‌های سایت شامل ذرات معلق پس‌زمینه، گلس‌مورفیسم، ۴ تم رنگی متنوع و اصوات سینت‌سایزر Web Audio هست! دکمه انفجار شادی رو کلیک کن تا افکت ویژه رو ببینی ✨🎉`;
             } else if (userText.includes('❤️') || userText.includes('🔥') || userText.includes('😎')) {
                 replyText = `اوووه چه انرژی بالایی! 🔥❤️ منم برات کلی آرزوی موفقیت و شادی دارم! ✨🎉`;
             } else {
-                // Random bot response
                 const responses = botUser.responses;
                 replyText = responses[Math.floor(Math.random() * responses.length)];
             }
@@ -594,12 +601,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const isSent = msgObj.senderId === appState.currentUser.id;
         const bubble = document.createElement('div');
         bubble.className = `message-bubble ${isSent ? 'sent' : 'received'}`;
-
         bubble.innerHTML = `
             <div class="msg-content">${msgObj.text}</div>
             <div class="msg-meta">
                 <span>${msgObj.timestamp}</span>
-                ${isSent ? '<i class="fa-solid fa-check-double" style="color: #00ff66;"></i>' : ''}
+                ${isSent ? '<span>✔✔</span>' : ''}
             </div>
         `;
         messagesListEl.appendChild(bubble);
@@ -607,18 +613,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function scrollToBottom() {
         setTimeout(() => {
-            messagesListEl.scrollTop = messagesListEl.scrollHeight;
+            if (messagesListEl) messagesListEl.scrollTop = messagesListEl.scrollHeight;
         }, 50);
     }
 
     function selectTargetUser(user) {
         playSound('click');
         appState.activeTargetUser = user;
-
-        // Reset unread count
         appState.unreadCounts.delete(user.id);
 
-        // Update UI
         noUserSelectedEl.classList.remove('active');
         activeChatContainer.classList.add('active');
 
@@ -626,12 +629,10 @@ document.addEventListener('DOMContentLoaded', () => {
         targetUserNameEl.textContent = user.name;
         targetUserStatusEl.textContent = user.status || 'آنلاین';
 
-        // Load messages
         messagesListEl.innerHTML = '';
         const history = appState.messages.get(user.id) || [];
         history.forEach(msg => appendMessageToDOM(msg));
         scrollToBottom();
-
         renderUsersSidebar();
     }
 
@@ -642,33 +643,27 @@ document.addEventListener('DOMContentLoaded', () => {
         renderUsersSidebar();
     }
 
-    // =========================================================================
-    // 7. RENDERING SIDEBAR USERS LIST
-    // =========================================================================
     function renderUsersSidebar() {
-        const searchQuery = userSearchInput.value.trim().toLowerCase();
+        if (!usersListEl) return;
+        const searchQuery = (userSearchInput ? userSearchInput.value : '').trim().toLowerCase();
         usersListEl.innerHTML = '';
 
         let usersArray = Array.from(appState.users.values());
-
-        // Filter by search
         if (searchQuery) {
             usersArray = usersArray.filter(u => u.name.toLowerCase().includes(searchQuery));
         }
 
-        // Sort: Real users first, then Bots
         usersArray.sort((a, b) => {
             if (a.isBot === b.isBot) return a.name.localeCompare(b.name);
             return a.isBot ? 1 : -1;
         });
 
-        onlineCountNumber.textContent = appState.users.size + 1; // Include self
-        sidebarUserCount.textContent = appState.users.size;
+        if (onlineCountNumber) onlineCountNumber.textContent = appState.users.size + 1;
+        if (sidebarUserCount) sidebarUserCount.textContent = appState.users.size;
 
         if (usersArray.length === 0) {
             usersListEl.innerHTML = `
-                <div style="text-align: center; padding: 25px; color: var(--text-muted); font-size: 0.88rem;">
-                    <i class="fa-solid fa-user-slash" style="font-size: 2rem; margin-bottom: 10px; color: var(--neon-primary); opacity: 0.5;"></i>
+                <div style="text-align:center;padding:25px;color:var(--text-muted);font-size:0.88rem;">
                     <p>کاربری یافت نشد...</p>
                 </div>
             `;
@@ -697,16 +692,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 ${unread > 0 ? `<div class="unread-badge">${unread}</div>` : ''}
             `;
-
             item.addEventListener('click', () => selectTargetUser(user));
             usersListEl.appendChild(item);
         });
     }
 
-    userSearchInput.addEventListener('input', renderUsersSidebar);
+    if (userSearchInput) userSearchInput.addEventListener('input', renderUsersSidebar);
 
     // =========================================================================
-    // 8. EMOJI PICKER & QUICK ACTIONS
+    // 7. EMOJI & CONTROLS
     // =========================================================================
     const EMOJIS_LIST = [
         '😀', '😁', '😂', '😎', '😍', '🥳', '🤩', '😇', '❤️', '🔥',
@@ -716,6 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     function initEmojiPicker() {
+        if (!emojiGridEl) return;
         emojiGridEl.innerHTML = '';
         EMOJIS_LIST.forEach(em => {
             const btn = document.createElement('button');
@@ -723,20 +718,22 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.className = 'emoji-btn';
             btn.textContent = em;
             btn.addEventListener('click', () => {
-                messageInput.value += em;
-                messageInput.focus();
+                if (messageInput) {
+                    messageInput.value += em;
+                    messageInput.focus();
+                }
             });
             emojiGridEl.appendChild(btn);
         });
     }
     initEmojiPicker();
 
-    btnEmojiToggle.addEventListener('click', () => {
+    if (btnEmojiToggle) btnEmojiToggle.addEventListener('click', () => {
         playSound('click');
-        emojiPickerPanel.classList.toggle('hidden');
+        if (emojiPickerPanel) emojiPickerPanel.classList.toggle('hidden');
     });
 
-    btnQuickEffect.addEventListener('click', () => {
+    if (btnQuickEffect) btnQuickEffect.addEventListener('click', () => {
         playSound('fx');
         triggerConfettiBurst(window.innerWidth / 2, window.innerHeight - 100);
         if (appState.activeTargetUser) {
@@ -744,105 +741,99 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    btnTriggerConfetti.addEventListener('click', () => {
-        triggerConfettiBurst();
-    });
+    if (btnTriggerConfetti) btnTriggerConfetti.addEventListener('click', () => triggerConfettiBurst());
 
-    btnClearChat.addEventListener('click', () => {
+    if (btnClearChat) btnClearChat.addEventListener('click', () => {
         if (!appState.activeTargetUser) return;
         playSound('click');
         appState.messages.set(appState.activeTargetUser.id, []);
-        messagesListEl.innerHTML = '';
+        if (messagesListEl) messagesListEl.innerHTML = '';
     });
 
-    // =========================================================================
-    // 9. THEME & SOUND CONTROLS
-    // =========================================================================
-    btnTheme.addEventListener('click', () => {
+    if (btnTheme) btnTheme.addEventListener('click', () => {
         playSound('click');
         const oldTheme = appState.themes[appState.currentThemeIdx];
         appState.currentThemeIdx = (appState.currentThemeIdx + 1) % appState.themes.length;
         const newTheme = appState.themes[appState.currentThemeIdx];
-
         document.body.classList.remove(oldTheme);
         document.body.classList.add(newTheme);
         triggerConfettiBurst(btnTheme.getBoundingClientRect().left, btnTheme.getBoundingClientRect().top, ['✨', '🎨', '🌟']);
     });
 
-    btnSound.addEventListener('click', () => {
+    if (btnSound) btnSound.addEventListener('click', () => {
         appState.soundEnabled = !appState.soundEnabled;
         if (appState.soundEnabled) {
-            btnSound.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+            btnSound.textContent = '🔊';
             btnSound.classList.add('active');
             playSound('click');
         } else {
-            btnSound.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+            btnSound.textContent = '🔇';
             btnSound.classList.remove('active');
         }
     });
 
     // =========================================================================
-    // 10. LOGIN & LOGOUT FLOW
+    // 8. LOGIN / ENTER CHAT HANDLERS
     // =========================================================================
-    avatarOptions.forEach(opt => {
-        opt.addEventListener('click', () => {
-            playSound('click');
-            avatarOptions.forEach(o => o.classList.remove('selected'));
-            opt.classList.add('selected');
-        });
-    });
-
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const username = usernameInput.value.trim();
-        if (!username) return;
-
-        const selectedAvatarEl = document.querySelector('.avatar-option.selected') || avatarOptions[0];
-        const avatar = selectedAvatarEl.getAttribute('data-avatar');
-        const status = statusInput.value.trim() || 'آماده برای گفتگو! ✨';
-
-        appState.currentUser = {
-            id: 'user_' + Math.random().toString(36).substr(2, 9),
-            name: username,
-            avatar: avatar,
-            status: status,
-            isBot: false
-        };
-
-        // Populate bots if requested
-        appState.botsEnabled = includeBotsCheck.checked;
-        if (appState.botsEnabled) {
-            PRELOADED_BOTS.forEach(bot => {
-                appState.users.set(bot.id, bot);
+    if (avatarOptions) {
+        avatarOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                playSound('click');
+                avatarOptions.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
             });
-        }
+        });
+    }
 
-        // Initialize Header & UI
-        headerMyAvatar.textContent = avatar;
-        headerMyName.textContent = username;
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = (usernameInput ? usernameInput.value : '').trim();
+            if (!username) {
+                if (usernameInput) usernameInput.focus();
+                return;
+            }
 
-        // Transition Screen
-        loginScreen.classList.remove('active');
-        chatScreen.classList.add('active');
+            const selectedAvatarEl = document.querySelector('.avatar-option.selected') || (avatarOptions && avatarOptions[0]);
+            const avatar = selectedAvatarEl ? selectedAvatarEl.getAttribute('data-avatar') : '😎';
+            const status = (statusInput && statusInput.value.trim()) || 'آماده برای گفتگو! ✨';
 
-        initNetworkEngine();
-        renderUsersSidebar();
-        playSound('login');
-        triggerConfettiBurst();
+            appState.currentUser = {
+                id: 'user_' + Math.random().toString(36).substr(2, 9),
+                name: username,
+                avatar: avatar,
+                status: status,
+                isBot: false
+            };
 
-        // Check offline users right away to load any existing tabs
-        checkOfflineUsers();
-    });
+            appState.botsEnabled = includeBotsCheck ? includeBotsCheck.checked : true;
+            if (appState.botsEnabled) {
+                PRELOADED_BOTS.forEach(bot => appState.users.set(bot.id, bot));
+            }
 
-    btnLogout.addEventListener('click', () => {
+            if (headerMyAvatar) headerMyAvatar.textContent = avatar;
+            if (headerMyName) headerMyName.textContent = username;
+
+            if (loginScreen) loginScreen.classList.remove('active');
+            if (chatScreen) chatScreen.classList.add('active');
+
+            initNetworkEngine();
+            renderUsersSidebar();
+            playSound('login');
+            triggerConfettiBurst();
+            checkOfflineUsers();
+        });
+    }
+
+    if (btnLogout) btnLogout.addEventListener('click', () => {
         playSound('click');
         if (appState.currentUser) {
             broadcast('USER_LOGOUT', { userId: appState.currentUser.id });
-            // Remove from registry
             try {
-                const registry = JSON.parse(localStorage.getItem('cyberchat_users_registry') || '{}');
+                const raw = safeGetStorage('cyberchat_users_registry') || '{}';
+                const registry = JSON.parse(raw);
                 delete registry[appState.currentUser.id];
-                localStorage.setItem('cyberchat_users_registry', JSON.stringify(registry));
+                safeSetStorage('cyberchat_users_registry', JSON.stringify(registry));
             } catch (e) {}
         }
 
@@ -850,103 +841,91 @@ document.addEventListener('DOMContentLoaded', () => {
         appState.activeTargetUser = null;
         appState.users.clear();
 
-        chatScreen.classList.remove('active');
-        loginScreen.classList.add('active');
+        if (chatScreen) chatScreen.classList.remove('active');
+        if (loginScreen) loginScreen.classList.add('active');
     });
 
-    // Send Message Form Submit
-    messageForm.addEventListener('submit', (e) => {
+    if (messageForm) messageForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        sendMessage(messageInput.value);
+        if (messageInput) sendMessage(messageInput.value);
     });
 
-    // Open in New Tab for Multi-Tab Simulation
-    btnOpenNewTab.addEventListener('click', () => {
+    if (btnOpenNewTab) btnOpenNewTab.addEventListener('click', () => {
         playSound('click');
         window.open(window.location.href, '_blank');
     });
 
-    // =========================================================================
-    // 11. MODAL & WEBRTC P2P REMOTE CONNECTION ENGINE
-    // =========================================================================
-    btnGuide.addEventListener('click', () => {
+    if (btnGuide) btnGuide.addEventListener('click', () => {
         playSound('click');
-        modalGuide.classList.remove('hidden');
+        if (modalGuide) modalGuide.classList.remove('hidden');
     });
 
-    btnP2pShare.addEventListener('click', () => {
+    if (btnP2pShare) btnP2pShare.addEventListener('click', () => {
         playSound('click');
-        modalGuide.classList.remove('hidden');
-        // Switch to P2P tab
-        modalTabBtns.forEach(b => b.classList.remove('active'));
-        modalTabContents.forEach(c => c.classList.add('hidden'));
-        document.querySelector('[data-target="tab-p2p"]').classList.add('active');
-        document.getElementById('tab-p2p').classList.remove('hidden');
-
+        if (modalGuide) modalGuide.classList.remove('hidden');
+        if (modalTabBtns) modalTabBtns.forEach(b => b.classList.remove('active'));
+        if (modalTabContents) modalTabContents.forEach(c => c.classList.add('hidden'));
+        const p2pTabBtn = document.querySelector('[data-target="tab-p2p"]');
+        const p2pTabContent = document.getElementById('tab-p2p');
+        if (p2pTabBtn) p2pTabBtn.classList.add('active');
+        if (p2pTabContent) p2pTabContent.classList.remove('hidden');
         initPeerJS();
     });
 
-    btnCloseModal.addEventListener('click', () => {
+    if (btnCloseModal) btnCloseModal.addEventListener('click', () => {
         playSound('click');
-        modalGuide.classList.add('hidden');
+        if (modalGuide) modalGuide.classList.add('hidden');
     });
 
-    modalTabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            playSound('click');
-            modalTabBtns.forEach(b => b.classList.remove('active'));
-            modalTabContents.forEach(c => c.classList.add('hidden'));
+    if (modalTabBtns) {
+        modalTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                playSound('click');
+                modalTabBtns.forEach(b => b.classList.remove('active'));
+                modalTabContents.forEach(c => c.classList.add('hidden'));
 
-            btn.classList.add('active');
-            const targetId = btn.getAttribute('data-target');
-            document.getElementById(targetId).classList.remove('hidden');
+                btn.classList.add('active');
+                const targetId = btn.getAttribute('data-target');
+                const targetContent = document.getElementById(targetId);
+                if (targetContent) targetContent.classList.remove('hidden');
 
-            if (targetId === 'tab-p2p') {
-                initPeerJS();
-            }
+                if (targetId === 'tab-p2p') {
+                    initPeerJS();
+                }
+            });
         });
-    });
+    }
 
     function initPeerJS() {
-        if (appState.peer) return; // Already initialized
-
+        if (appState.peer) return;
         const myPeerIdEl = document.getElementById('my-peer-id');
         const p2pStatusEl = document.getElementById('p2p-status-text');
-        p2pStatusEl.textContent = 'در حال اتصال به سرور سیگنالینگ WebRTC...';
+        if (p2pStatusEl) p2pStatusEl.textContent = 'در حال اتصال به سرور سیگنالینگ WebRTC...';
 
         try {
+            if (typeof Peer === 'undefined') {
+                if (p2pStatusEl) p2pStatusEl.textContent = 'برای قابلیت P2P نیاز به اتصال به اینترنت جهت بارگذاری PeerJS است.';
+                return;
+            }
             appState.peer = new Peer();
             appState.peer.on('open', (id) => {
-                myPeerIdEl.value = id;
-                p2pStatusEl.textContent = 'آماده اتصال! کد خود را برای دوستتان بفرستید.';
+                if (myPeerIdEl) myPeerIdEl.value = id;
+                if (p2pStatusEl) p2pStatusEl.textContent = 'آماده اتصال! کد خود را برای دوستتان بفرستید.';
             });
-
-            // Handle incoming P2P connection
-            appState.peer.on('connection', (conn) => {
-                setupP2PConnection(conn, p2pStatusEl);
-            });
+            appState.peer.on('connection', (conn) => setupP2PConnection(conn, p2pStatusEl));
         } catch (e) {
-            p2pStatusEl.textContent = 'خطا در بارگذاری PeerJS: مطمئن شوید به اینترنت متصل هستید.';
+            if (p2pStatusEl) p2pStatusEl.textContent = 'خطا در بارگذاری PeerJS';
         }
     }
 
     function setupP2PConnection(conn, statusEl) {
         appState.peerConnection = conn;
-
         conn.on('open', () => {
-            statusEl.textContent = `متصل شدید به: ${conn.peer} 🟢`;
+            if (statusEl) statusEl.textContent = `متصل شدید به: ${conn.peer} 🟢`;
             playSound('login');
             triggerConfettiBurst();
-
-            // Send our profile to peer
-            if (appState.currentUser) {
-                conn.send({
-                    type: 'P2P_PROFILE',
-                    user: appState.currentUser
-                });
-            }
+            if (appState.currentUser) conn.send({ type: 'P2P_PROFILE', user: appState.currentUser });
         });
-
         conn.on('data', (data) => {
             if (data.type === 'P2P_PROFILE' && data.user) {
                 const pUser = data.user;
@@ -959,37 +938,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 receiveMessage(data.senderId, data.message);
             }
         });
-
         conn.on('close', () => {
-            statusEl.textContent = 'اتصال P2P قطع شد 🔴';
+            if (statusEl) statusEl.textContent = 'اتصال P2P قطع شد 🔴';
         });
     }
 
-    document.getElementById('btn-copy-peer').addEventListener('click', () => {
+    const btnCopyPeer = document.getElementById('btn-copy-peer');
+    if (btnCopyPeer) btnCopyPeer.addEventListener('click', () => {
         const myPeerIdEl = document.getElementById('my-peer-id');
-        if (!myPeerIdEl.value || myPeerIdEl.value.includes('در حال')) return;
+        if (!myPeerIdEl || !myPeerIdEl.value || myPeerIdEl.value.includes('در حال')) return;
         navigator.clipboard.writeText(myPeerIdEl.value);
         playSound('click');
         alert('کد اتصال در کلیپ‌بورد کپی شد!');
     });
 
-    document.getElementById('btn-connect-friend').addEventListener('click', () => {
-        const friendId = document.getElementById('friend-peer-id').value.trim();
+    const btnConnectFriend = document.getElementById('btn-connect-friend');
+    if (btnConnectFriend) btnConnectFriend.addEventListener('click', () => {
+        const friendEl = document.getElementById('friend-peer-id');
+        const friendId = friendEl ? friendEl.value.trim() : '';
         const p2pStatusEl = document.getElementById('p2p-status-text');
         if (!friendId || !appState.peer) return;
 
-        p2pStatusEl.textContent = 'در حال برقراری ارتباط با دوست...';
+        if (p2pStatusEl) p2pStatusEl.textContent = 'در حال برقراری ارتباط با دوست...';
         const conn = appState.peer.connect(friendId);
         setupP2PConnection(conn, p2pStatusEl);
     });
 
-    // Close modal on click outside
-    modalGuide.addEventListener('click', (e) => {
-        if (e.target === modalGuide) {
-            modalGuide.classList.add('hidden');
-        }
+    if (modalGuide) modalGuide.addEventListener('click', (e) => {
+        if (e.target === modalGuide) modalGuide.classList.add('hidden');
     });
 
-    // Clean initial focus
-    usernameInput.focus();
+    if (usernameInput) usernameInput.focus();
 });

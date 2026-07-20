@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>سایبر چت | پلتفرم گفتگوی زنده و پیشرفته</title>
-    <!-- Vazirmatn Font & FontAwesome CDN (Loads on GitHub / Live browser) -->
+    <!-- Vazirmatn Font & FontAwesome CDN -->
     <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <!-- External stylesheet fallback if kept separate -->
     <link rel="stylesheet" href="style.css">
 
     <style>
@@ -94,14 +93,14 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-            pointer-events: none;
+            pointer-events: none !important;
         }
 
         .top-controls {
             position: fixed;
             top: 15px;
             left: 20px;
-            z-index: 100;
+            z-index: 200;
             display: flex;
             gap: 12px;
         }
@@ -122,6 +121,7 @@
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             text-decoration: none;
+            pointer-events: auto;
         }
 
         .control-btn:hover, .control-btn.active {
@@ -152,24 +152,27 @@
             transition: opacity 0.4s ease;
         }
 
+        /* SCREEN SWITCHER - BULLETPROOF AGAINST OVERLAPPING */
         .screen {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            z-index: 10;
-            display: flex;
+            z-index: -1 !important;
+            display: none !important;
             align-items: center;
             justify-content: center;
             opacity: 0;
-            pointer-events: none;
+            pointer-events: none !important;
             transform: scale(0.96);
-            transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
 
         .screen.active {
+            display: flex !important;
             opacity: 1;
-            pointer-events: all;
+            pointer-events: auto !important;
             transform: scale(1);
+            z-index: 100 !important;
         }
 
         /* LOGIN CARD */
@@ -181,6 +184,9 @@
             text-align: center;
             overflow: hidden;
             animation: floatCard 6s ease-in-out infinite alternate;
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 101;
         }
 
         @keyframes floatCard {
@@ -247,8 +253,10 @@
             border: 2px solid rgba(255, 255, 255, 0.1);
             display: flex; align-items: center; justify-content: center;
             font-size: 1.6rem;
-            cursor: pointer;
+            cursor: pointer !important;
             transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            user-select: none;
+            pointer-events: auto !important;
         }
 
         .avatar-option:hover { background: rgba(255, 255, 255, 0.12); transform: translateY(-3px); }
@@ -261,7 +269,7 @@
 
         .input-group { position: relative; margin-bottom: 20px; text-align: right; }
         .input-wrapper { position: relative; display: flex; align-items: center; }
-        .input-icon { position: absolute; right: 16px; color: var(--neon-primary); font-size: 1.1rem; }
+        .input-icon { position: absolute; right: 16px; color: var(--neon-primary); font-size: 1.1rem; pointer-events: none; }
         .input-wrapper input {
             width: 100%;
             padding: 15px 48px 15px 16px;
@@ -271,6 +279,7 @@
             color: var(--text-main);
             font-size: 1rem;
             transition: all 0.3s ease;
+            pointer-events: auto !important;
         }
         .input-wrapper input:focus {
             outline: none;
@@ -280,18 +289,20 @@
         }
 
         .login-options { text-align: right; margin-bottom: 25px; }
-        .custom-checkbox { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.88rem; color: var(--text-muted); user-select: none; }
+        .custom-checkbox { display: inline-flex; align-items: center; gap: 10px; cursor: pointer !important; font-size: 0.88rem; color: var(--text-muted); user-select: none; pointer-events: auto !important; }
         .custom-checkbox input { display: none; }
         .checkmark {
-            width: 20px; height: 20px;
+            width: 22px; height: 22px;
             background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--glass-border);
+            border: 2px solid var(--glass-border);
             border-radius: 6px;
             display: flex; align-items: center; justify-content: center;
             transition: all 0.2s ease;
+            flex-shrink: 0;
+            pointer-events: none;
         }
-        .custom-checkbox input:checked + .checkmark { background: var(--neon-primary); border-color: var(--neon-primary); }
-        .custom-checkbox input:checked + .checkmark::after { content: '✔'; font-size: 0.75rem; color: var(--bg-primary); font-weight: bold; }
+        .custom-checkbox input:checked + .checkmark { background: var(--neon-primary); border-color: var(--neon-primary); box-shadow: 0 0 10px var(--neon-primary); }
+        .custom-checkbox input:checked + .checkmark::after { content: '✔'; font-size: 0.85rem; color: var(--bg-primary); font-weight: 900; }
 
         .btn-neon-primary {
             width: 100%;
@@ -301,12 +312,14 @@
             border-radius: 16px;
             color: var(--bg-primary);
             font-size: 1.05rem; font-weight: 800;
-            cursor: pointer;
+            cursor: pointer !important;
             display: flex; align-items: center; justify-content: center; gap: 12px;
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             box-shadow: 0 6px 20px rgba(0, 243, 255, 0.3);
+            pointer-events: auto !important;
+            user-select: none;
         }
-        .btn-neon-primary:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 30px var(--neon-primary); filter: brightness(1.1); }
+        .btn-neon-primary:hover, .btn-neon-primary:active { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 30px var(--neon-primary); filter: brightness(1.1); }
 
         .login-footer {
             margin-top: 24px; padding-top: 20px;
@@ -378,7 +391,7 @@
 
         /* RIGHT SIDEBAR */
         .users-sidebar {
-            width: 330px; border-left: 1px solid var(--glass-border);
+            width: 320px; border-left: 1px solid var(--glass-border);
             display: flex; flex-direction: column; background: rgba(8, 14, 24, 0.5);
         }
         .sidebar-header {
@@ -401,8 +414,9 @@
         .user-item {
             display: flex; align-items: center; justify-content: space-between;
             padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.03);
-            border: 1px solid transparent; cursor: pointer;
+            border: 1px solid transparent; cursor: pointer !important;
             transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; overflow: hidden;
+            pointer-events: auto;
         }
         .user-item:hover { background: rgba(255, 255, 255, 0.08); transform: translateX(-4px); border-color: rgba(0, 243, 255, 0.3); }
         .user-item.active {
@@ -444,10 +458,10 @@
         .chat-area { flex: 1; position: relative; display: flex; flex-direction: column; background: rgba(14, 22, 38, 0.3); }
         .empty-chat-state {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 40px; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            display: none !important; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 40px; opacity: 0; pointer-events: none !important; transition: opacity 0.3s ease;
         }
-        .empty-chat-state.active { opacity: 1; pointer-events: all; }
+        .empty-chat-state.active { display: flex !important; opacity: 1; pointer-events: auto !important; }
         .empty-icon { font-size: 4rem; color: var(--neon-primary); margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--neon-primary)); }
         .float-animate { animation: floatIcon 3s ease-in-out infinite alternate; }
         @keyframes floatIcon { from { transform: translateY(0); } to { transform: translateY(-12px); } }
@@ -459,8 +473,8 @@
             padding: 14px 20px; border-radius: 14px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--neon-primary);
         }
 
-        .active-chat-container { display: flex; flex-direction: column; height: 100%; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        .active-chat-container.active { opacity: 1; pointer-events: all; }
+        .active-chat-container { display: none !important; flex-direction: column; height: 100%; opacity: 0; pointer-events: none !important; transition: opacity 0.3s ease; }
+        .active-chat-container.active { display: flex !important; opacity: 1; pointer-events: auto !important; }
 
         .chat-header {
             height: 75px; padding: 0 28px; border-bottom: 1px solid var(--glass-border);
@@ -541,9 +555,9 @@
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(4, 8, 16, 0.8); backdrop-filter: blur(10px); z-index: 500;
-            display: flex; align-items: center; justify-content: center; opacity: 1; pointer-events: all; transition: all 0.35s ease;
+            display: none !important; align-items: center; justify-content: center; opacity: 0; pointer-events: none !important; transition: all 0.35s ease;
         }
-        .modal-overlay.hidden { opacity: 0; pointer-events: none; }
+        .modal-overlay:not(.hidden) { display: flex !important; opacity: 1; pointer-events: auto !important; }
         .modal-card { width: 90%; max-width: 680px; max-height: 85vh; padding: 36px; overflow-y: auto; position: relative; transform: scale(1); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
         .modal-overlay.hidden .modal-card { transform: scale(0.9); }
         .modal-close {
@@ -574,7 +588,7 @@
         .btn-copy:hover { background: var(--neon-primary); color: var(--bg-primary); }
         .status-msg { font-size: 0.88rem; color: #00ff66; margin-top: 10px; text-align: center; }
 
-        .fx-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
+        .fx-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none !important; z-index: 1000; }
         .fx-particle { position: absolute; pointer-events: none; animation: fxFly 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes fxFly {
             0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
@@ -663,7 +677,7 @@
                     </label>
                 </div>
 
-                <button type="submit" class="btn-neon-primary glow-btn">
+                <button type="submit" class="btn-neon-primary glow-btn" id="btn-submit-login">
                     <span>ورود به چت‌روم</span>
                     <span>⬅</span>
                 </button>
@@ -893,22 +907,27 @@ git push -u origin main</pre>
     <!-- Confetti / Particle Container -->
     <div id="fx-container" class="fx-container"></div>
 
-    <!-- Embedded script for instant execution -->
+    <!-- Embedded script for instant execution inside sandboxed preview -->
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        function safeSetStorage(key, value) {
+            try { localStorage.setItem(key, value); }
+            catch (e) { if (!window._memoryStorage) window._memoryStorage = {}; window._memoryStorage[key] = value; }
+        }
+        function safeGetStorage(key) {
+            try { return localStorage.getItem(key); }
+            catch (e) { if (!window._memoryStorage) window._memoryStorage = {}; return window._memoryStorage[key] || null; }
+        }
+        function getSafeBroadcastChannel(channelName) {
+            try { if ('BroadcastChannel' in window) return new BroadcastChannel(channelName); }
+            catch (e) {} return null;
+        }
+
         const appState = {
-            currentUser: null,
-            activeTargetUser: null,
-            users: new Map(),
-            messages: new Map(),
-            unreadCounts: new Map(),
-            soundEnabled: true,
-            themes: ['theme-cyberpunk', 'theme-matrix', 'theme-sunset', 'theme-gold'],
-            currentThemeIdx: 0,
-            broadcastChannel: null,
-            peer: null,
-            peerConnection: null,
-            botsEnabled: true
+            currentUser: null, activeTargetUser: null,
+            users: new Map(), messages: new Map(), unreadCounts: new Map(),
+            soundEnabled: true, themes: ['theme-cyberpunk', 'theme-matrix', 'theme-sunset', 'theme-gold'],
+            currentThemeIdx: 0, broadcastChannel: null, peer: null, peerConnection: null, botsEnabled: true
         };
 
         const loginScreen = document.getElementById('login-screen');
@@ -955,105 +974,70 @@ git push -u origin main</pre>
         const modalTabBtns = document.querySelectorAll('.modal-tab-btn');
         const modalTabContents = document.querySelectorAll('.modal-tab-content');
 
-        // Audio
         let audioCtx = null;
         function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
+            try { if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+            catch (e) {}
         }
 
         function playSound(type) {
             if (!appState.soundEnabled) return;
             try {
-                initAudio();
+                initAudio(); if (!audioCtx) return;
                 if (audioCtx.state === 'suspended') audioCtx.resume();
                 const now = audioCtx.currentTime;
-
                 if (type === 'click') {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(600, now);
-                    osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
-                    gain.gain.setValueAtTime(0.15, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(now); osc.stop(now + 0.05);
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.05);
+                    gain.gain.setValueAtTime(0.15, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                    osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.05);
                 }
                 else if (type === 'login') {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(300, now);
-                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(now); osc.stop(now + 0.35);
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                    osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.35);
                 }
                 else if (type === 'send') {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(450, now);
-                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(now); osc.stop(now + 0.12);
+                    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(450, now); osc.frequency.exponentialRampToValueAtTime(900, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                    osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now); osc.stop(now + 0.12);
                 }
                 else if (type === 'receive') {
-                    const osc1 = audioCtx.createOscillator();
-                    const gain1 = audioCtx.createGain();
+                    const osc1 = audioCtx.createOscillator(); const gain1 = audioCtx.createGain();
                     osc1.type = 'sine'; osc1.frequency.setValueAtTime(660, now);
                     gain1.gain.setValueAtTime(0.2, now); gain1.gain.linearRampToValueAtTime(0.01, now + 0.1);
-                    osc1.connect(gain1); gain1.connect(audioCtx.destination);
-                    osc1.start(now); osc1.stop(now + 0.1);
+                    osc1.connect(gain1); gain1.connect(audioCtx.destination); osc1.start(now); osc1.stop(now + 0.1);
 
-                    const osc2 = audioCtx.createOscillator();
-                    const gain2 = audioCtx.createGain();
+                    const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain();
                     osc2.type = 'sine'; osc2.frequency.setValueAtTime(880, now + 0.12);
                     gain2.gain.setValueAtTime(0.25, now + 0.12); gain2.gain.linearRampToValueAtTime(0.01, now + 0.28);
-                    osc2.connect(gain2); gain2.connect(audioCtx.destination);
-                    osc2.start(now + 0.12); osc2.stop(now + 0.28);
+                    osc2.connect(gain2); gain2.connect(audioCtx.destination); osc2.start(now + 0.12); osc2.stop(now + 0.28);
                 }
                 else if (type === 'fx') {
                     [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
+                        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
                         osc.type = 'triangle'; osc.frequency.setValueAtTime(freq, now + idx * 0.06);
                         gain.gain.setValueAtTime(0.15, now + idx * 0.06); gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.06 + 0.3);
-                        osc.connect(gain); gain.connect(audioCtx.destination);
-                        osc.start(now + idx * 0.06); osc.stop(now + idx * 0.06 + 0.3);
+                        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(now + idx * 0.06); osc.stop(now + idx * 0.06 + 0.3);
                     });
                 }
             } catch (e) {}
         }
 
-        // Particle Canvas
         const canvas = document.getElementById('particle-canvas');
         const ctx = canvas.getContext('2d');
-        let particles = [];
-        let mouse = { x: null, y: null };
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        window.addEventListener('mousemove', (e) => { mouse.x = e.x; mouse.y = e.y; });
+        let particles = []; let mouse = { x: null, y: null };
+        function resizeCanvas() { if (!canvas) return; canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
         window.addEventListener('mouseout', () => { mouse.x = null; mouse.y = null; });
 
         class Particle {
             constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.size = Math.random() * 2.2 + 1;
-                this.speedX = (Math.random() - 0.5) * 1.2;
-                this.speedY = (Math.random() - 0.5) * 1.2;
+                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2.2 + 1; this.speedX = (Math.random() - 0.5) * 1.2; this.speedY = (Math.random() - 0.5) * 1.2;
                 this.color = Math.random() > 0.5 ? '#00f3ff' : '#b026ff';
             }
             update() {
@@ -1066,20 +1050,17 @@ git push -u origin main</pre>
                     if (dist < 100) { this.x -= dx * 0.02; this.y -= dy * 0.02; }
                 }
             }
-            draw() {
-                ctx.fillStyle = this.color; ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-            }
+            draw() { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
         }
 
         function initParticles() {
-            particles = [];
-            const count = Math.min(Math.floor(window.innerWidth / 15), 70);
+            particles = []; const count = Math.min(Math.floor(window.innerWidth / 15), 70);
             for (let i = 0; i < count; i++) particles.push(new Particle());
         }
         initParticles();
 
         function animateParticles() {
+            if (!ctx || !canvas) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (let i = 0; i < particles.length; i++) {
                 particles[i].update(); particles[i].draw();
@@ -1088,8 +1069,7 @@ git push -u origin main</pre>
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < 130) {
                         ctx.strokeStyle = `rgba(0, 243, 255, ${1 - dist / 130})`;
-                        ctx.lineWidth = 0.6; ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
+                        ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y); ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
                     }
                 }
             }
@@ -1099,20 +1079,14 @@ git push -u origin main</pre>
 
         const fxContainer = document.getElementById('fx-container');
         function triggerConfettiBurst(x = window.innerWidth / 2, y = window.innerHeight / 2, emojis = ['🎉', '✨', '⚡', '🔥', '❤️', '💎', '🚀']) {
-            playSound('fx');
+            playSound('fx'); if (!fxContainer) return;
             for (let i = 0; i < 30; i++) {
-                const particle = document.createElement('span');
-                particle.className = 'fx-particle';
+                const particle = document.createElement('span'); particle.className = 'fx-particle';
                 particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-                particle.style.left = `${x}px`; particle.style.top = `${y}px`;
-                particle.style.fontSize = `${Math.random() * 1.5 + 1}rem`;
-                const angle = Math.random() * Math.PI * 2;
-                const distance = Math.random() * 220 + 80;
-                const dx = Math.cos(angle) * distance; const dy = Math.sin(angle) * distance;
-                const rot = (Math.random() - 0.5) * 720;
-                particle.style.setProperty('--dx', `${dx}px`);
-                particle.style.setProperty('--dy', `${dy}px`);
-                particle.style.setProperty('--rot', `${rot}deg`);
+                particle.style.left = `${x}px`; particle.style.top = `${y}px`; particle.style.fontSize = `${Math.random() * 1.5 + 1}rem`;
+                const angle = Math.random() * Math.PI * 2; const distance = Math.random() * 220 + 80;
+                const dx = Math.cos(angle) * distance; const dy = Math.sin(angle) * distance; const rot = (Math.random() - 0.5) * 720;
+                particle.style.setProperty('--dx', `${dx}px`); particle.style.setProperty('--dy', `${dy}px`); particle.style.setProperty('--rot', `${rot}deg`);
                 fxContainer.appendChild(particle);
                 setTimeout(() => particle.remove(), 1200);
             }
@@ -1120,25 +1094,17 @@ git push -u origin main</pre>
 
         const PRELOADED_BOTS = [
             {
-                id: 'bot-aria',
-                name: 'آریا (دستیار هوشمند) 🤖',
-                avatar: '🤖',
-                status: 'پاسخ‌گوی سوالات و راهنمای چت',
-                isBot: true,
+                id: 'bot-aria', name: 'آریا (دستیار هوشمند) 🤖', avatar: '🤖', status: 'پاسخ‌گوی سوالات و راهنمای چت', isBot: true,
                 responses: [
                     "سلام دوست من! خیلی خوش اومدی به سایبر چت ✨ من آریا هستم، دستیار هوشمند سایت.",
-                    "این سایت با قابلیت همگام‌سازی بین تب‌ها (BroadcastChannel) ساخته شده و بدون نیاز به سرور مرکزی کار می‌کنه!",
-                    "افکت‌های نئونی و گلس‌مورفیسم رو چطور می‌بینی؟ اگه روی دکمه چوب جادویی بالای چت بزنی، افکت ویژه می‌بینی 🎉",
+                    "این سایت با معماری کاملاً کلاینت-ساید و قابلیت همگام‌سازی بین تب‌ها ساخته شده و بدون نیاز به سرور مرکزی کار می‌کنه!",
+                    "افکت‌های نئونی و گلس‌مورفیسم رو چطور می‌بینی؟ اگه روی دکمه انفجار شادی بالای چت بزنی، افکت ویژه می‌بینی 🎉",
                     "برای اینکه این سایت رو روی گیت‌هاب ران کنی، فقط کافیه فایل‌های همین پوشه رو آپلود کنی و از بخش Settings > Pages فعالش کنی! راهنمای کامل رو هم از دکمه راهنما بالای صفحه بخون.",
                     "هر سوالی یا پیامی داری بهم بگو، من آنلاینم! 🔥⚡"
                 ]
             },
             {
-                id: 'bot-sara',
-                name: 'سارا (طراح دیزاین) 🎨',
-                avatar: '😎',
-                status: 'عاشق افکت‌های سایبرپانک و نئون!',
-                isBot: true,
+                id: 'bot-sara', name: 'سارا (طراح دیزاین) 🎨', avatar: '😎', status: 'عاشق افکت‌های سایبرپانک و نئون!', isBot: true,
                 responses: [
                     "سلام! دیزاین سایبرپانک سایت فوق‌العاده‌ست، مگه نه؟ 😍",
                     "رنگ‌های فیروزه‌ای (#00f3ff) و بنفش نئونی ترکیب شگفت‌انگیزی می‌سازن! اگه دوست داری می‌تونی با دکمه جرقه ✨ بالای صفحه تم رنگی رو هم عوض کنی!",
@@ -1147,11 +1113,7 @@ git push -u origin main</pre>
                 ]
             },
             {
-                id: 'bot-sina',
-                name: 'سینا (برنامه‌نویس) 💻',
-                avatar: '🚀',
-                status: 'در حال توسعه ارتباط WebRTC P2P...',
-                isBot: true,
+                id: 'bot-sina', name: 'سینا (برنامه‌نویس) 💻', avatar: '🚀', status: 'در حال توسعه ارتباط WebRTC P2P...', isBot: true,
                 responses: [
                     "درود! اگه می‌خوای با دوستت که روی یه کامپیوتر دیگه هست چت کنی، حتماً بخش «اتصال راه دور P2P» بالای صفحه رو چک کن!",
                     "با استفاده از WebRTC می‌تونید به صورت مستقیم و بدون نیاز به سرور مرکزی، با همدیگه گفتگوی زنده داشته باشید.",
@@ -1162,8 +1124,8 @@ git push -u origin main</pre>
         ];
 
         function initNetworkEngine() {
-            if ('BroadcastChannel' in window) {
-                appState.broadcastChannel = new BroadcastChannel('cyberchat_network_v1');
+            appState.broadcastChannel = getSafeBroadcastChannel('cyberchat_network_v1');
+            if (appState.broadcastChannel) {
                 appState.broadcastChannel.onmessage = (event) => handleNetworkMessage(event.data);
             }
             window.addEventListener('storage', (e) => {
@@ -1177,23 +1139,23 @@ git push -u origin main</pre>
 
         function broadcast(action, payload) {
             const packet = { senderId: appState.currentUser ? appState.currentUser.id : null, action, payload, timestamp: Date.now() };
-            if (appState.broadcastChannel) appState.broadcastChannel.postMessage(packet);
-            localStorage.setItem('cyberchat_broadcast_event', JSON.stringify(packet));
+            if (appState.broadcastChannel) { try { appState.broadcastChannel.postMessage(packet); } catch (e) {} }
+            safeSetStorage('cyberchat_broadcast_event', JSON.stringify(packet));
         }
 
         function sendHeartbeat() {
             if (!appState.currentUser) return;
             broadcast('HEARTBEAT', { user: appState.currentUser });
             try {
-                const registry = JSON.parse(localStorage.getItem('cyberchat_users_registry') || '{}');
+                const raw = safeGetStorage('cyberchat_users_registry') || '{}'; const registry = JSON.parse(raw);
                 registry[appState.currentUser.id] = { user: appState.currentUser, lastSeen: Date.now() };
-                localStorage.setItem('cyberchat_users_registry', JSON.stringify(registry));
+                safeSetStorage('cyberchat_users_registry', JSON.stringify(registry));
             } catch (e) {}
         }
 
         function checkOfflineUsers() {
             try {
-                const registry = JSON.parse(localStorage.getItem('cyberchat_users_registry') || '{}');
+                const raw = safeGetStorage('cyberchat_users_registry') || '{}'; const registry = JSON.parse(raw);
                 const now = Date.now(); let changed = false;
                 Object.keys(registry).forEach(uid => {
                     if (uid === (appState.currentUser ? appState.currentUser.id : '')) return;
@@ -1229,40 +1191,25 @@ git push -u origin main</pre>
             else if (action === 'DIRECT_MESSAGE' && payload.targetUserId === appState.currentUser.id) {
                 receiveMessage(payload.senderId, payload.message);
             }
-            else if (action === 'TYPING' && payload.targetUserId === appState.currentUser.id) {
-                if (appState.activeTargetUser && appState.activeTargetUser.id === payload.senderId) {
-                    if (payload.isTyping) { typingUsernameEl.textContent = appState.users.get(payload.senderId)?.name || 'کاربر'; typingIndicatorEl.classList.remove('hidden'); }
-                    else { typingIndicatorEl.classList.add('hidden'); }
-                }
-            }
         }
 
         function receiveMessage(senderId, messageObj) {
             if (!appState.messages.has(senderId)) appState.messages.set(senderId, []);
-            appState.messages.get(senderId).push(messageObj);
-            playSound('receive');
-            if (appState.activeTargetUser && appState.activeTargetUser.id === senderId) {
-                appendMessageToDOM(messageObj); scrollToBottom();
-            } else {
-                const currentUnread = appState.unreadCounts.get(senderId) || 0;
-                appState.unreadCounts.set(senderId, currentUnread + 1);
-                renderUsersSidebar();
-            }
+            appState.messages.get(senderId).push(messageObj); playSound('receive');
+            if (appState.activeTargetUser && appState.activeTargetUser.id === senderId) { appendMessageToDOM(messageObj); scrollToBottom(); }
+            else { const currentUnread = appState.unreadCounts.get(senderId) || 0; appState.unreadCounts.set(senderId, currentUnread + 1); renderUsersSidebar(); }
         }
 
         function sendMessage(text) {
             if (!text.trim() || !appState.activeTargetUser) return;
             const targetId = appState.activeTargetUser.id;
             const msgObj = {
-                id: 'msg_' + Math.random().toString(36).substr(2, 9),
-                senderId: appState.currentUser.id,
-                text: text.trim(),
+                id: 'msg_' + Math.random().toString(36).substr(2, 9), senderId: appState.currentUser.id, text: text.trim(),
                 timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
             };
             if (!appState.messages.has(targetId)) appState.messages.set(targetId, []);
             appState.messages.get(targetId).push(msgObj);
-            appendMessageToDOM(msgObj); scrollToBottom();
-            playSound('send'); messageInput.value = '';
+            appendMessageToDOM(msgObj); scrollToBottom(); playSound('send'); messageInput.value = '';
 
             if (text.includes('🎉') || text.includes('❤️') || text.includes('🔥') || text.includes('✨') || text.includes('⚡')) triggerConfettiBurst();
 
@@ -1296,12 +1243,10 @@ git push -u origin main</pre>
                 } else if (userText.includes('❤️') || userText.includes('🔥') || userText.includes('😎')) {
                     replyText = `اوووه چه انرژی بالایی! 🔥❤️ منم برات کلی آرزوی موفقیت و شادی دارم! ✨🎉`;
                 } else {
-                    const responses = botUser.responses;
-                    replyText = responses[Math.floor(Math.random() * responses.length)];
+                    const responses = botUser.responses; replyText = responses[Math.floor(Math.random() * responses.length)];
                 }
                 const replyObj = {
-                    id: 'msg_' + Math.random().toString(36).substr(2, 9),
-                    senderId: botUser.id, text: replyText,
+                    id: 'msg_' + Math.random().toString(36).substr(2, 9), senderId: botUser.id, text: replyText,
                     timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
                 };
                 receiveMessage(botUser.id, replyObj);
@@ -1319,34 +1264,38 @@ git push -u origin main</pre>
                     ${isSent ? '<span>✔✔</span>' : ''}
                 </div>
             `;
-            messagesListEl.appendChild(bubble);
+            if (messagesListEl) messagesListEl.appendChild(bubble);
         }
 
         function scrollToBottom() {
-            setTimeout(() => messagesListEl.scrollTop = messagesListEl.scrollHeight, 50);
+            setTimeout(() => { if (messagesListEl) messagesListEl.scrollTop = messagesListEl.scrollHeight; }, 50);
         }
 
         function selectTargetUser(user) {
-            playSound('click');
-            appState.activeTargetUser = user;
-            appState.unreadCounts.delete(user.id);
-            noUserSelectedEl.classList.remove('active'); activeChatContainer.classList.add('active');
-            targetUserAvatarEl.textContent = user.avatar; targetUserNameEl.textContent = user.name;
-            targetUserStatusEl.textContent = user.status || 'آنلاین';
-            messagesListEl.innerHTML = '';
-            const history = appState.messages.get(user.id) || [];
-            history.forEach(msg => appendMessageToDOM(msg));
+            playSound('click'); appState.activeTargetUser = user; appState.unreadCounts.delete(user.id);
+            if (noUserSelectedEl) noUserSelectedEl.classList.remove('active');
+            if (activeChatContainer) activeChatContainer.classList.add('active');
+            if (targetUserAvatarEl) targetUserAvatarEl.textContent = user.avatar;
+            if (targetUserNameEl) targetUserNameEl.textContent = user.name;
+            if (targetUserStatusEl) targetUserStatusEl.textContent = user.status || 'آنلاین';
+            if (messagesListEl) {
+                messagesListEl.innerHTML = '';
+                const history = appState.messages.get(user.id) || [];
+                history.forEach(msg => appendMessageToDOM(msg));
+            }
             scrollToBottom(); renderUsersSidebar();
         }
 
         function closeActiveChat() {
             appState.activeTargetUser = null;
-            activeChatContainer.classList.remove('active'); noUserSelectedEl.classList.add('active');
+            if (activeChatContainer) activeChatContainer.classList.remove('active');
+            if (noUserSelectedEl) noUserSelectedEl.classList.add('active');
             renderUsersSidebar();
         }
 
         function renderUsersSidebar() {
-            const searchQuery = userSearchInput.value.trim().toLowerCase();
+            if (!usersListEl) return;
+            const searchQuery = (userSearchInput ? userSearchInput.value : '').trim().toLowerCase();
             usersListEl.innerHTML = '';
             let usersArray = Array.from(appState.users.values());
             if (searchQuery) usersArray = usersArray.filter(u => u.name.toLowerCase().includes(searchQuery));
@@ -1355,8 +1304,8 @@ git push -u origin main</pre>
                 return a.isBot ? 1 : -1;
             });
 
-            onlineCountNumber.textContent = appState.users.size + 1;
-            sidebarUserCount.textContent = appState.users.size;
+            if (onlineCountNumber) onlineCountNumber.textContent = appState.users.size + 1;
+            if (sidebarUserCount) sidebarUserCount.textContent = appState.users.size;
 
             if (usersArray.length === 0) {
                 usersListEl.innerHTML = `<div style="text-align:center;padding:25px;color:var(--text-muted);font-size:0.88rem;"><p>کاربری یافت نشد...</p></div>`;
@@ -1389,7 +1338,7 @@ git push -u origin main</pre>
             });
         }
 
-        userSearchInput.addEventListener('input', renderUsersSidebar);
+        if (userSearchInput) userSearchInput.addEventListener('input', renderUsersSidebar);
 
         const EMOJIS_LIST = [
             '😀', '😁', '😂', '😎', '😍', '🥳', '🤩', '😇', '❤️', '🔥',
@@ -1399,28 +1348,30 @@ git push -u origin main</pre>
         ];
 
         function initEmojiPicker() {
+            if (!emojiGridEl) return;
             emojiGridEl.innerHTML = '';
             EMOJIS_LIST.forEach(em => {
                 const btn = document.createElement('button');
                 btn.type = 'button'; btn.className = 'emoji-btn'; btn.textContent = em;
-                btn.addEventListener('click', () => { messageInput.value += em; messageInput.focus(); });
+                btn.addEventListener('click', () => { if (messageInput) { messageInput.value += em; messageInput.focus(); } });
                 emojiGridEl.appendChild(btn);
             });
         }
         initEmojiPicker();
 
-        btnEmojiToggle.addEventListener('click', () => { playSound('click'); emojiPickerPanel.classList.toggle('hidden'); });
-        btnQuickEffect.addEventListener('click', () => {
+        if (btnEmojiToggle) btnEmojiToggle.addEventListener('click', () => { playSound('click'); if (emojiPickerPanel) emojiPickerPanel.classList.toggle('hidden'); });
+        if (btnQuickEffect) btnQuickEffect.addEventListener('click', () => {
             playSound('fx'); triggerConfettiBurst(window.innerWidth / 2, window.innerHeight - 100);
             if (appState.activeTargetUser) sendMessage('🔥❤️⚡✨🎉');
         });
-        btnTriggerConfetti.addEventListener('click', () => triggerConfettiBurst());
-        btnClearChat.addEventListener('click', () => {
+        if (btnTriggerConfetti) btnTriggerConfetti.addEventListener('click', () => triggerConfettiBurst());
+        if (btnClearChat) btnClearChat.addEventListener('click', () => {
             if (!appState.activeTargetUser) return;
-            playSound('click'); appState.messages.set(appState.activeTargetUser.id, []); messagesListEl.innerHTML = '';
+            playSound('click'); appState.messages.set(appState.activeTargetUser.id, []);
+            if (messagesListEl) messagesListEl.innerHTML = '';
         });
 
-        btnTheme.addEventListener('click', () => {
+        if (btnTheme) btnTheme.addEventListener('click', () => {
             playSound('click');
             const oldTheme = appState.themes[appState.currentThemeIdx];
             appState.currentThemeIdx = (appState.currentThemeIdx + 1) % appState.themes.length;
@@ -1429,94 +1380,108 @@ git push -u origin main</pre>
             triggerConfettiBurst(btnTheme.getBoundingClientRect().left, btnTheme.getBoundingClientRect().top, ['✨', '🎨', '🌟']);
         });
 
-        btnSound.addEventListener('click', () => {
+        if (btnSound) btnSound.addEventListener('click', () => {
             appState.soundEnabled = !appState.soundEnabled;
             if (appState.soundEnabled) { btnSound.textContent = '🔊'; btnSound.classList.add('active'); playSound('click'); }
             else { btnSound.textContent = '🔇'; btnSound.classList.remove('active'); }
         });
 
-        avatarOptions.forEach(opt => {
-            opt.addEventListener('click', () => {
-                playSound('click'); avatarOptions.forEach(o => o.classList.remove('selected')); opt.classList.add('selected');
+        if (avatarOptions) {
+            avatarOptions.forEach(opt => {
+                opt.addEventListener('click', () => {
+                    playSound('click'); avatarOptions.forEach(o => o.classList.remove('selected')); opt.classList.add('selected');
+                });
             });
-        });
+        }
 
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = usernameInput.value.trim(); if (!username) return;
-            const selectedAvatarEl = document.querySelector('.avatar-option.selected') || avatarOptions[0];
-            const avatar = selectedAvatarEl.getAttribute('data-avatar');
-            const status = statusInput.value.trim() || 'آماده برای گفتگو! ✨';
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const username = (usernameInput ? usernameInput.value : '').trim();
+                if (!username) { if (usernameInput) usernameInput.focus(); return; }
 
-            appState.currentUser = {
-                id: 'user_' + Math.random().toString(36).substr(2, 9),
-                name: username, avatar: avatar, status: status, isBot: false
-            };
+                const selectedAvatarEl = document.querySelector('.avatar-option.selected') || (avatarOptions && avatarOptions[0]);
+                const avatar = selectedAvatarEl ? selectedAvatarEl.getAttribute('data-avatar') : '😎';
+                const status = (statusInput && statusInput.value.trim()) || 'آماده برای گفتگو! ✨';
 
-            appState.botsEnabled = includeBotsCheck.checked;
-            if (appState.botsEnabled) PRELOADED_BOTS.forEach(bot => appState.users.set(bot.id, bot));
+                appState.currentUser = {
+                    id: 'user_' + Math.random().toString(36).substr(2, 9),
+                    name: username, avatar: avatar, status: status, isBot: false
+                };
 
-            headerMyAvatar.textContent = avatar; headerMyName.textContent = username;
-            loginScreen.classList.remove('active'); chatScreen.classList.add('active');
+                appState.botsEnabled = includeBotsCheck ? includeBotsCheck.checked : true;
+                if (appState.botsEnabled) PRELOADED_BOTS.forEach(bot => appState.users.set(bot.id, bot));
 
-            initNetworkEngine(); renderUsersSidebar(); playSound('login'); triggerConfettiBurst(); checkOfflineUsers();
-        });
+                if (headerMyAvatar) headerMyAvatar.textContent = avatar;
+                if (headerMyName) headerMyName.textContent = username;
 
-        btnLogout.addEventListener('click', () => {
+                if (loginScreen) loginScreen.classList.remove('active');
+                if (chatScreen) chatScreen.classList.add('active');
+
+                initNetworkEngine(); renderUsersSidebar(); playSound('login'); triggerConfettiBurst(); checkOfflineUsers();
+            });
+        }
+
+        if (btnLogout) btnLogout.addEventListener('click', () => {
             playSound('click');
             if (appState.currentUser) {
                 broadcast('USER_LOGOUT', { userId: appState.currentUser.id });
                 try {
-                    const registry = JSON.parse(localStorage.getItem('cyberchat_users_registry') || '{}');
-                    delete registry[appState.currentUser.id]; localStorage.setItem('cyberchat_users_registry', JSON.stringify(registry));
+                    const raw = safeGetStorage('cyberchat_users_registry') || '{}'; const registry = JSON.parse(raw);
+                    delete registry[appState.currentUser.id]; safeSetStorage('cyberchat_users_registry', JSON.stringify(registry));
                 } catch (e) {}
             }
             appState.currentUser = null; appState.activeTargetUser = null; appState.users.clear();
-            chatScreen.classList.remove('active'); loginScreen.classList.add('active');
+            if (chatScreen) chatScreen.classList.remove('active');
+            if (loginScreen) loginScreen.classList.add('active');
         });
 
-        messageForm.addEventListener('submit', (e) => { e.preventDefault(); sendMessage(messageInput.value); });
-        btnOpenNewTab.addEventListener('click', () => { playSound('click'); window.open(window.location.href, '_blank'); });
+        if (messageForm) messageForm.addEventListener('submit', (e) => { e.preventDefault(); if (messageInput) sendMessage(messageInput.value); });
+        if (btnOpenNewTab) btnOpenNewTab.addEventListener('click', () => { playSound('click'); window.open(window.location.href, '_blank'); });
 
-        btnGuide.addEventListener('click', () => { playSound('click'); modalGuide.classList.remove('hidden'); });
-        btnP2pShare.addEventListener('click', () => {
-            playSound('click'); modalGuide.classList.remove('hidden');
-            modalTabBtns.forEach(b => b.classList.remove('active')); modalTabContents.forEach(c => c.classList.add('hidden'));
-            document.querySelector('[data-target="tab-p2p"]').classList.add('active');
-            document.getElementById('tab-p2p').classList.remove('hidden'); initPeerJS();
+        if (btnGuide) btnGuide.addEventListener('click', () => { playSound('click'); if (modalGuide) modalGuide.classList.remove('hidden'); });
+        if (btnP2pShare) btnP2pShare.addEventListener('click', () => {
+            playSound('click'); if (modalGuide) modalGuide.classList.remove('hidden');
+            if (modalTabBtns) modalTabBtns.forEach(b => b.classList.remove('active'));
+            if (modalTabContents) modalTabContents.forEach(c => c.classList.add('hidden'));
+            const p2pTabBtn = document.querySelector('[data-target="tab-p2p"]');
+            const p2pTabContent = document.getElementById('tab-p2p');
+            if (p2pTabBtn) p2pTabBtn.classList.add('active');
+            if (p2pTabContent) p2pTabContent.classList.remove('hidden'); initPeerJS();
         });
-        btnCloseModal.addEventListener('click', () => { playSound('click'); modalGuide.classList.add('hidden'); });
+        if (btnCloseModal) btnCloseModal.addEventListener('click', () => { playSound('click'); if (modalGuide) modalGuide.classList.add('hidden'); });
 
-        modalTabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                playSound('click'); modalTabBtns.forEach(b => b.classList.remove('active')); modalTabContents.forEach(c => c.classList.add('hidden'));
-                btn.classList.add('active'); const targetId = btn.getAttribute('data-target');
-                document.getElementById(targetId).classList.remove('hidden');
-                if (targetId === 'tab-p2p') initPeerJS();
+        if (modalTabBtns) {
+            modalTabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    playSound('click'); modalTabBtns.forEach(b => b.classList.remove('active')); modalTabContents.forEach(c => c.classList.add('hidden'));
+                    btn.classList.add('active'); const targetId = btn.getAttribute('data-target');
+                    const targetContent = document.getElementById(targetId);
+                    if (targetContent) targetContent.classList.remove('hidden');
+                    if (targetId === 'tab-p2p') initPeerJS();
+                });
             });
-        });
+        }
 
         function initPeerJS() {
             if (appState.peer) return;
             const myPeerIdEl = document.getElementById('my-peer-id');
             const p2pStatusEl = document.getElementById('p2p-status-text');
-            p2pStatusEl.textContent = 'در حال اتصال به سرور سیگنالینگ WebRTC...';
+            if (p2pStatusEl) p2pStatusEl.textContent = 'در حال اتصال به سرور سیگنالینگ WebRTC...';
             try {
                 if (typeof Peer === 'undefined') {
-                    p2pStatusEl.textContent = 'برای قابلیت P2P نیاز به اتصال به اینترنت جهت بارگذاری PeerJS است.';
-                    return;
+                    if (p2pStatusEl) p2pStatusEl.textContent = 'برای قابلیت P2P نیاز به اتصال به اینترنت جهت بارگذاری PeerJS است.'; return;
                 }
                 appState.peer = new Peer();
-                appState.peer.on('open', (id) => { myPeerIdEl.value = id; p2pStatusEl.textContent = 'آماده اتصال! کد خود را برای دوستتان بفرستید.'; });
+                appState.peer.on('open', (id) => { if (myPeerIdEl) myPeerIdEl.value = id; if (p2pStatusEl) p2pStatusEl.textContent = 'آماده اتصال! کد خود را برای دوستتان بفرستید.'; });
                 appState.peer.on('connection', (conn) => setupP2PConnection(conn, p2pStatusEl));
-            } catch (e) { p2pStatusEl.textContent = 'خطا در بارگذاری PeerJS'; }
+            } catch (e) { if (p2pStatusEl) p2pStatusEl.textContent = 'خطا در بارگذاری PeerJS'; }
         }
 
         function setupP2PConnection(conn, statusEl) {
             appState.peerConnection = conn;
             conn.on('open', () => {
-                statusEl.textContent = `متصل شدید به: ${conn.peer} 🟢`;
-                playSound('login'); triggerConfettiBurst();
+                if (statusEl) statusEl.textContent = `متصل شدید به: ${conn.peer} 🟢`; playSound('login'); triggerConfettiBurst();
                 if (appState.currentUser) conn.send({ type: 'P2P_PROFILE', user: appState.currentUser });
             });
             conn.on('data', (data) => {
@@ -1526,25 +1491,28 @@ git push -u origin main</pre>
                 }
                 else if (data.type === 'P2P_MESSAGE') receiveMessage(data.senderId, data.message);
             });
-            conn.on('close', () => statusEl.textContent = 'اتصال P2P قطع شد 🔴');
+            conn.on('close', () => { if (statusEl) statusEl.textContent = 'اتصال P2P قطع شد 🔴'; });
         }
 
-        document.getElementById('btn-copy-peer').addEventListener('click', () => {
+        const btnCopyPeer = document.getElementById('btn-copy-peer');
+        if (btnCopyPeer) btnCopyPeer.addEventListener('click', () => {
             const myPeerIdEl = document.getElementById('my-peer-id');
-            if (!myPeerIdEl.value || myPeerIdEl.value.includes('در حال')) return;
+            if (!myPeerIdEl || !myPeerIdEl.value || myPeerIdEl.value.includes('در حال')) return;
             navigator.clipboard.writeText(myPeerIdEl.value); playSound('click'); alert('کد اتصال کپی شد!');
         });
 
-        document.getElementById('btn-connect-friend').addEventListener('click', () => {
-            const friendId = document.getElementById('friend-peer-id').value.trim();
+        const btnConnectFriend = document.getElementById('btn-connect-friend');
+        if (btnConnectFriend) btnConnectFriend.addEventListener('click', () => {
+            const friendEl = document.getElementById('friend-peer-id');
+            const friendId = friendEl ? friendEl.value.trim() : '';
             const p2pStatusEl = document.getElementById('p2p-status-text');
             if (!friendId || !appState.peer) return;
-            p2pStatusEl.textContent = 'در حال برقراری ارتباط با دوست...';
+            if (p2pStatusEl) p2pStatusEl.textContent = 'در حال برقراری ارتباط با دوست...';
             const conn = appState.peer.connect(friendId); setupP2PConnection(conn, p2pStatusEl);
         });
 
-        modalGuide.addEventListener('click', (e) => { if (e.target === modalGuide) modalGuide.classList.add('hidden'); });
-        usernameInput.focus();
+        if (modalGuide) modalGuide.addEventListener('click', (e) => { if (e.target === modalGuide) modalGuide.classList.add('hidden'); });
+        if (usernameInput) usernameInput.focus();
     });
     </script>
     <script src="script.js"></script>
